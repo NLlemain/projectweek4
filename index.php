@@ -7,35 +7,33 @@ try {
     $db = $database->getConnection();
     $energyData = new EnergyData($db);
 
-    // Get all data with error handling
+    // Get all real data from database
     $currentUsage = $energyData->getCurrentUsage();
-    $solarGenerated = $energyData->getSolarGenerated();
-    $batteryStored = $energyData->getBatteryStored();
-    $energyCost = $energyData->getEnergyCost();
-    $batteryPercentage = $energyData->getBatteryPercentage();
-    $topConsumers = $energyData->getTopConsumers();
-    $efficiency = $energyData->getEfficiencyScore();
+    $solarVoltage = $energyData->getSolarVoltage();
+    $solarCurrent = $energyData->getSolarCurrent();
+    $solarPower = $energyData->getSolarPower();
+    $batteryLevel = $energyData->getBatteryLevel();
+    $hydrogenProduction = $energyData->getHydrogenProduction();
+    $hydrogenStorage = $energyData->getHydrogenStorage();
+    $temperatureData = $energyData->getTemperatureData();
+    $environmentalData = $energyData->getEnvironmentalData();
+    $latestReadings = $energyData->getLatestReadings();
 
     // Calculate percentage changes
     $usageChange = $energyData->getPercentageChange('usage');
     $solarChange = $energyData->getPercentageChange('solar');
-    $costChange = $energyData->getPercentageChange('cost');
+    $batteryChange = $energyData->getPercentageChange('battery');
+    $hydrogenChange = $energyData->getPercentageChange('hydrogen');
     
 } catch (Exception $e) {
-    // If there's a database error, use default values
-    $currentUsage = 2.4;
-    $solarGenerated = 18.7;
-    $batteryStored = 7.5;
-    $energyCost = 127.50;
-    $batteryPercentage = 75;
-    $topConsumers = ['air_conditioning' => 42, 'water_heater' => 28, 'lighting' => 15, 'kitchen' => 15];
-    $efficiency = ['efficiency_score' => 85, 'peak_optimization' => 'Good', 'solar_utilization' => 'Excellent'];
-    $usageChange = -12;
-    $solarChange = 8;
-    $costChange = 5;
-    
-    // Optionally show error for debugging
-    // echo "Database Error: " . $e->getMessage();
+    $error_message = "Database connection failed: " . $e->getMessage();
+    // Set all values to 0 on error
+    $currentUsage = $solarVoltage = $solarCurrent = $solarPower = 0;
+    $batteryLevel = $hydrogenProduction = $hydrogenStorage = 0;
+    $temperatureData = ['outdoor' => 0, 'indoor' => 0];
+    $environmentalData = ['pressure' => 0, 'humidity' => 0, 'co2' => 0];
+    $latestReadings = [];
+    $usageChange = $solarChange = $batteryChange = $hydrogenChange = 0;
 }
 ?>
 
@@ -49,72 +47,83 @@ try {
 </head>
 <body>
     <div class="container">
+        <?php if (isset($error_message)): ?>
+        <div class="error-message">
+            <?php echo $error_message; ?>
+        </div>
+        <?php endif; ?>
         
         <header>
             <div class="app-icon">S</div>
-            <h1>SmartEnergy</h1>
+            <h1>SmartEnergy Dashboard</h1>
             <div class="live-indicator">
                 <span class="dot"></span>
-                Live
+                Live Data
             </div>
         </header>
 
-        <!-- Main Stats Cards -->
+        <!-- Main Energy Stats -->
         <div class="main-stats">
             <div class="stat-card usage">
                 <div class="stat-header">
                     <div class="stat-icon usage">⚡</div>
-                    <div class="stat-label">Current Usage</div>
-                    <div class="stat-period">Live</div>
+                    <div class="stat-label">Stroomverbruik Woning</div>
+                    <div class="stat-period">Current</div>
                 </div>
-                <div class="stat-value"><?php echo number_format($currentUsage, 1); ?> kW</div>
+                <div class="stat-value"><?php echo number_format($currentUsage, 3); ?> kW</div>
                 <div class="stat-change <?php echo $usageChange < 0 ? 'negative' : 'positive'; ?>">
-                    <?php echo ($usageChange < 0 ? '↓' : '↑') . ' ' . abs($usageChange) . '%'; ?> vs yesterday
+                    <?php echo ($usageChange < 0 ? '↓' : '↑') . ' ' . abs($usageChange) . '%'; ?> vs previous
                 </div>
             </div>
 
             <div class="stat-card solar">
                 <div class="stat-header">
                     <div class="stat-icon solar">☀</div>
-                    <div class="stat-label">Solar Generated</div>
-                    <div class="stat-period">Today</div>
+                    <div class="stat-label">Zonnepaneel Vermogen</div>
+                    <div class="stat-period">Current</div>
                 </div>
-                <div class="stat-value"><?php echo number_format($solarGenerated, 1); ?> kWh</div>
+                <div class="stat-value"><?php echo number_format($solarPower, 2); ?> W</div>
+                <div class="stat-subtitle">
+                    <?php echo number_format($solarVoltage, 2); ?>V × <?php echo number_format($solarCurrent, 3); ?>A
+                </div>
                 <div class="stat-change <?php echo $solarChange < 0 ? 'negative' : 'positive'; ?>">
-                    <?php echo ($solarChange < 0 ? '↓' : '↑') . ' ' . abs($solarChange) . '%'; ?> vs yesterday
+                    <?php echo ($solarChange < 0 ? '↓' : '↑') . ' ' . abs($solarChange) . '%'; ?> vs previous
                 </div>
             </div>
 
             <div class="stat-card battery">
                 <div class="stat-header">
                     <div class="stat-icon battery">🔋</div>
-                    <div class="stat-label">Battery Stored</div>
-                    <div class="stat-period"><?php echo $batteryPercentage; ?>%</div>
+                    <div class="stat-label">Accu Niveau</div>
+                    <div class="stat-period">Current</div>
                 </div>
-                <div class="stat-value"><?php echo number_format($batteryStored, 1); ?> kWh</div>
+                <div class="stat-value"><?php echo number_format($batteryLevel, 2); ?>%</div>
                 <div class="battery-bar">
-                    <div class="battery-fill" style="width: <?php echo $batteryPercentage; ?>%"></div>
+                    <div class="battery-fill" style="width: <?php echo min(100, max(0, $batteryLevel)); ?>%"></div>
+                </div>
+                <div class="stat-change <?php echo $batteryChange < 0 ? 'negative' : 'positive'; ?>">
+                    <?php echo ($batteryChange < 0 ? '↓' : '↑') . ' ' . abs($batteryChange) . '%'; ?> vs previous
                 </div>
             </div>
 
-            <div class="stat-card cost">
+            <div class="stat-card hydrogen">
                 <div class="stat-header">
-                    <div class="stat-icon cost">$</div>
-                    <div class="stat-label">Energy Cost</div>
-                    <div class="stat-period">This month</div>
+                    <div class="stat-icon hydrogen">💧</div>
+                    <div class="stat-label">Waterstof Productie</div>
+                    <div class="stat-period">Current</div>
                 </div>
-                <div class="stat-value">$<?php echo number_format($energyCost, 2); ?></div>
-                <div class="stat-change <?php echo $costChange < 0 ? 'negative' : 'positive'; ?>">
-                    <?php echo ($costChange < 0 ? '↓' : '↑') . ' ' . abs($costChange) . '%'; ?> vs last month
+                <div class="stat-value"><?php echo number_format($hydrogenProduction, 4); ?></div>
+                <div class="stat-change <?php echo $hydrogenChange < 0 ? 'negative' : 'positive'; ?>">
+                    <?php echo ($hydrogenChange < 0 ? '↓' : '↑') . ' ' . abs($hydrogenChange) . '%'; ?> vs previous
                 </div>
-            </div>
+            </div>  
         </div>
 
-        <!-- Charts and Sources -->
+        <!-- Charts and Real-time Data -->
         <div class="dashboard-grid">
             <div class="chart-section">
                 <div class="chart-header">
-                    <div class="chart-title">Energy Consumption</div>
+                    <div class="chart-title">Energy Monitoring</div>
                     <div class="chart-controls">
                         <button class="chart-period active" data-period="day">Last Day</button>
                         <button class="chart-period" data-period="week">Last 7 Days</button>
@@ -127,80 +136,183 @@ try {
             </div>
 
             <div class="sources-section">
-                <div class="sources-title">Energy Sources</div>
-                <div class="source-legend">
-                    <div class="legend-item">
-                        <div class="legend-dot solar"></div>
-                        Solar 70%
+                <div class="sources-title">System Status</div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Power Usage</span>
+                        <span class="status-value"><?php echo number_format($currentUsage, 3); ?> kW</span>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot grid"></div>
-                        Grid 30%
+                    <div class="status-item">
+                        <span class="status-label">Solar Output</span>
+                        <span class="status-value"><?php echo number_format($solarPower, 2); ?> W</span>
                     </div>
-                </div>
-                <div class="source-chart-container">
-                    <canvas id="sourcesChart"></canvas>
+                    <div class="status-item">
+                        <span class="status-label">Battery Level</span>
+                        <span class="status-value"><?php echo number_format($batteryLevel, 1); ?>%</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">H2 Production</span>
+                        <span class="status-value"><?php echo number_format($hydrogenProduction, 4); ?></span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Section -->
+        <!-- Real-time Data Table -->
         <div class="bottom-section">
-            <div class="consumers-card">
-                <div class="section-title">Top Energy Consumers</div>
-                <div class="consumer-item">
-                    <div class="consumer-info">
-                        <div class="consumer-icon ac">❄</div>
-                        <div class="consumer-name">Air Conditioning</div>
-                    </div>
-                    <div class="consumer-percent"><?php echo $topConsumers['air_conditioning']; ?>%</div>
-                </div>
-                <div class="consumer-item">
-                    <div class="consumer-info">
-                        <div class="consumer-icon heater">🔥</div>
-                        <div class="consumer-name">Water Heater</div>
-                    </div>
-                    <div class="consumer-percent"><?php echo $topConsumers['water_heater']; ?>%</div>
-                </div>
-                <div class="consumer-item">
-                    <div class="consumer-info">
-                        <div class="consumer-icon light">💡</div>
-                        <div class="consumer-name">Lighting</div>
-                    </div>
-                    <div class="consumer-percent"><?php echo $topConsumers['lighting']; ?>%</div>
-                </div>
-                <div class="consumer-item">
-                    <div class="consumer-info">
-                        <div class="consumer-icon kitchen">🍳</div>
-                        <div class="consumer-name">Kitchen</div>
-                    </div>
-                    <div class="consumer-percent"><?php echo $topConsumers['kitchen']; ?>%</div>
+            <div class="data-table-card">
+                <div class="section-title">Latest Sensor Readings</div>
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Current Value</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Stroomverbruik Woning</td>
+                                <td><?php echo number_format($currentUsage, 3); ?></td>
+                                <td>kW</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $currentUsage > 0 ? 'active' : 'inactive'; ?>">
+                                        <span class="status-indicator <?php echo $currentUsage > 0 ? 'active' : 'inactive'; ?>"></span>
+                                        <?php echo $currentUsage > 0 ? 'Active' : 'Inactive'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Zonnepaneel Spanning</td>
+                                <td><?php echo number_format($solarVoltage, 2); ?></td>
+                                <td>V</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $solarVoltage > 0 ? 'active' : 'inactive'; ?>">
+                                        <span class="status-indicator <?php echo $solarVoltage > 0 ? 'active' : 'inactive'; ?>"></span>
+                                        <?php echo $solarVoltage > 0 ? 'Active' : 'Inactive'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Zonnepaneel Stroom</td>
+                                <td><?php echo number_format($solarCurrent, 3); ?></td>
+                                <td>A</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $solarCurrent > 0 ? 'active' : 'inactive'; ?>">
+                                        <span class="status-indicator <?php echo $solarCurrent > 0 ? 'active' : 'inactive'; ?>"></span>
+                                        <?php echo $solarCurrent > 0 ? 'Active' : 'Inactive'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Accu Niveau</td>
+                                <td><?php echo number_format($batteryLevel, 2); ?></td>
+                                <td>%</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $batteryLevel > 20 ? 'active' : 'warning'; ?>">
+                                        <span class="status-indicator <?php echo $batteryLevel > 20 ? 'active' : 'warning'; ?>"></span>
+                                        <?php echo $batteryLevel > 20 ? 'Good' : 'Low'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Waterstof Productie</td>
+                                <td><?php echo number_format($hydrogenProduction, 4); ?></td>
+                                <td>-</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $hydrogenProduction > 0 ? 'active' : 'inactive'; ?>">
+                                        <span class="status-indicator <?php echo $hydrogenProduction > 0 ? 'active' : 'inactive'; ?>"></span>
+                                        <?php echo $hydrogenProduction > 0 ? 'Producing' : 'Standby'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Waterstof Opslag</td>
+                                <td><?php echo number_format($hydrogenStorage, 1); ?></td>
+                                <td>%</td>
+                                <td>
+                                    <span class="sensor-status-badge <?php echo $hydrogenStorage > 10 ? 'active' : 'warning'; ?>">
+                                        <span class="status-indicator <?php echo $hydrogenStorage > 10 ? 'active' : 'warning'; ?>"></span>
+                                        <?php echo $hydrogenStorage > 10 ? 'Good' : 'Low'; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="efficiency-card">
-                <div class="section-title">Efficiency Score</div>
-                <div class="efficiency-score-display">
-                    <div class="efficiency-circle">
-                        <div class="efficiency-value"><?php echo $efficiency['efficiency_score']; ?>%</div>
-                    </div>
-                    <div class="efficiency-label">Excellent efficiency rating</div>
-                </div>
-                <div class="efficiency-details">
-                    <div class="efficiency-item">
-                        <div class="efficiency-item-label">Peak usage optimization</div>
-                        <div class="efficiency-status <?php echo strtolower($efficiency['peak_optimization']); ?>">
-                            <?php echo $efficiency['peak_optimization']; ?>
+            <div class="environmental-card">
+                <div class="section-title">Environmental Conditions</div>
+                <div class="env-grid">
+                    <div class="env-item">
+                        <div class="env-icon">🌡️</div>
+                        <div class="env-data">
+                            <div class="env-label">Outdoor Temperature</div>
+                            <div class="env-value"><?php echo number_format($temperatureData['outdoor'], 1); ?>°C</div>
                         </div>
                     </div>
-                    <div class="efficiency-item">
-                        <div class="efficiency-item-label">Solar utilization</div>
-                        <div class="efficiency-status <?php echo strtolower($efficiency['solar_utilization']); ?>">
-                            <?php echo $efficiency['solar_utilization']; ?>
+                    <div class="env-item">
+                        <div class="env-icon">🏠</div>
+                        <div class="env-data">
+                            <div class="env-label">Indoor Temperature</div>
+                            <div class="env-value"><?php echo number_format($temperatureData['indoor'], 1); ?>°C</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <div class="env-icon">📊</div>
+                        <div class="env-data">
+                            <div class="env-label">Air Pressure</div>
+                            <div class="env-value"><?php echo number_format($environmentalData['pressure'], 1); ?> hPa</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <div class="env-icon">💧</div>
+                        <div class="env-data">
+                            <div class="env-label">Humidity</div>
+                            <div class="env-value"><?php echo number_format($environmentalData['humidity'], 1); ?>%</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <div class="env-icon">🌫️</div>
+                        <div class="env-data">
+                            <div class="env-label">CO2 Concentration</div>
+                            <div class="env-value"><?php echo number_format($environmentalData['co2'], 0); ?> ppm</div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="actions-card">
+                <div class="section-title">Quick Actions</div>
+                <div class="action-buttons">
+                    <a href="pages/schedule-usage.php" class="action-btn">
+                        <div style="display: flex; align-items: center;">
+                            <div class="action-btn-icon"></div>
+                            Schedule Usage
+                        </div>
+                        <div class="action-btn-arrow">›</div>
+                    </a>
+                    <a href="pages/energy-settings.php" class="action-btn">
+                        <div style="display: flex; align-items: center;">
+                            <div class="action-btn-icon"></div>
+                            Energy Settings
+                        </div>
+                        <div class="action-btn-arrow">›</div>
+                    </a>
+                    <a href="pages/export-report.php" class="action-btn">
+                        <div style="display: flex; align-items: center;">
+                            <div class="action-btn-icon"></div>
+                            Export Report
+                        </div>
+                        <div class="action-btn-arrow">›</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/dashboard.js"></script>
