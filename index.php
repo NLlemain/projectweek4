@@ -60,11 +60,37 @@ try {
                 <span class="dot"></span>
                 Live Data
             </div>
+            <button class="edit-mode-btn" onclick="toggleEditMode()">
+                <span class="edit-icon">✏️</span>
+                <span class="edit-text">Edit</span>
+            </button>
         </header>
 
+        <!-- Edit Mode Controls (hidden by default) -->
+        <div class="edit-controls" id="editControls" style="display: none;">
+            <div class="edit-toolbar">
+                <div class="toolbar-section">
+                    <h3>Customize Dashboard</h3>
+                </div>
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" onclick="resetLayout()">Reset Layout</button>
+                    <button class="toolbar-btn" onclick="saveChanges()">Save Changes</button>
+                    <button class="toolbar-btn cancel" onclick="toggleEditMode()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Energy Stats -->
-        <div class="main-stats">
-            <div class="stat-card usage">
+        <div class="main-stats editable-container" data-container="main-stats">
+            <div class="stat-card usage editable-element" data-element="usage-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn edit-btn" onclick="openAdvancedEdit(this)" title="Advanced Edit">✏️</button>
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)" title="Quick Colors">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)" title="Delete">🗑️</button>
+                    </div>
+                </div>
                 <div class="stat-header">
                     <div class="stat-icon usage">⚡</div>
                     <div class="stat-label">Stroomverbruik Woning</div>
@@ -76,7 +102,15 @@ try {
                 </div>
             </div>
 
-            <div class="stat-card solar">
+            <div class="stat-card solar editable-element" data-element="solar-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn edit-btn" onclick="openAdvancedEdit(this)" title="Advanced Edit">✏️</button>
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)" title="Quick Colors">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)" title="Delete">🗑️</button>
+                    </div>
+                </div>
                 <div class="stat-header">
                     <div class="stat-icon solar">☀</div>
                     <div class="stat-label">Zonnepaneel Vermogen</div>
@@ -91,7 +125,15 @@ try {
                 </div>
             </div>
 
-            <div class="stat-card battery">
+            <div class="stat-card battery editable-element" data-element="battery-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn edit-btn" onclick="openAdvancedEdit(this)" title="Advanced Edit">✏️</button>
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)" title="Quick Colors">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)" title="Delete">🗑️</button>
+                    </div>
+                </div>
                 <div class="stat-header">
                     <div class="stat-icon battery">🔋</div>
                     <div class="stat-label">Accu Niveau</div>
@@ -106,7 +148,15 @@ try {
                 </div>
             </div>
 
-            <div class="stat-card hydrogen">
+            <div class="stat-card hydrogen editable-element" data-element="hydrogen-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn edit-btn" onclick="openAdvancedEdit(this)" title="Advanced Edit">✏️</button>
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)" title="Quick Colors">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)" title="Delete">🗑️</button>
+                    </div>
+                </div>
                 <div class="stat-header">
                     <div class="stat-icon hydrogen">💧</div>
                     <div class="stat-label">Waterstof Productie</div>
@@ -120,8 +170,15 @@ try {
         </div>
 
         <!-- Charts and Real-time Data -->
-        <div class="dashboard-grid">
-            <div class="chart-section">
+        <div class="dashboard-grid editable-container" data-container="dashboard-grid">
+            <div class="chart-section editable-element" data-element="chart-section">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)">🗑️</button>
+                    </div>
+                </div>
                 <div class="chart-header">
                     <div class="chart-title">Energy Monitoring</div>
                     <div class="chart-controls">
@@ -135,7 +192,14 @@ try {
                 </div>
             </div>
 
-            <div class="sources-section">
+            <div class="sources-section editable-element" data-element="sources-section">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)">🗑️</button>
+                    </div>
+                </div>
                 <div class="sources-title">System Status</div>
                 <div class="status-grid">
                     <div class="status-item">
@@ -159,8 +223,15 @@ try {
         </div>
 
         <!-- Real-time Data Table -->
-        <div class="bottom-section">
-            <div class="data-table-card">
+        <div class="bottom-section editable-container" data-container="bottom-section">
+            <div class="data-table-card editable-element" data-element="data-table">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)">🗑️</button>
+                    </div>
+                </div>
                 <div class="section-title">Latest Sensor Readings</div>
                 <div class="data-table">
                     <table>
@@ -244,7 +315,14 @@ try {
                 </div>
             </div>
 
-            <div class="environmental-card">
+            <div class="environmental-card editable-element" data-element="environmental-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)">🗑️</button>
+                    </div>
+                </div>
                 <div class="section-title">Environmental Conditions</div>
                 <div class="env-grid">
                     <div class="env-item">
@@ -285,7 +363,14 @@ try {
                 </div>
             </div>
 
-            <div class="actions-card">
+            <div class="actions-card editable-element" data-element="actions-card">
+                <div class="edit-handle" style="display: none;">
+                    <span class="drag-icon">⋮⋮</span>
+                    <div class="element-controls">
+                        <button class="control-btn color-btn" onclick="openColorPicker(this)">🎨</button>
+                        <button class="control-btn remove-btn" onclick="removeElement(this)">🗑️</button>
+                    </div>
+                </div>
                 <div class="section-title">Quick Actions</div>
                 <div class="action-buttons">
                     <a href="pages/schedule-usage.php" class="action-btn">
@@ -314,7 +399,33 @@ try {
         </div>
     </div>
 
+    <!-- Color Picker Modal -->
+    <div class="color-picker-modal" id="colorPickerModal" style="display: none;">
+        <div class="color-picker-content">
+            <h3>Customize Colors</h3>
+            <div class="color-options">
+                <div class="color-section">
+                    <label for="bgColorPicker">Background Color:</label>
+                    <input type="color" id="bgColorPicker" value="#ffffff">
+                </div>
+                <div class="color-section">
+                    <label for="borderColorPicker">Border Color:</label>
+                    <input type="color" id="borderColorPicker" value="#3b82f6">
+                </div>
+                <div class="color-section">
+                    <label for="textColorPicker">Text Color:</label>
+                    <input type="color" id="textColorPicker" value="#1e293b">
+                </div>
+            </div>
+            <div class="color-picker-actions">
+                <button class="apply-colors-btn" onclick="applyColors()">Apply</button>
+                <button class="cancel-colors-btn" onclick="closeColorPicker()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/edit-mode.js"></script>
 </body>
 </html>
